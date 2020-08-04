@@ -1,0 +1,157 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Excel demo widget</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>        
+
+        <style>
+            body { font-family: Roboto,sans-serif; padding: 0; margin: 0; color: #1b274a; }
+			body { background-color: rgb (31,86,124) }
+
+            h1 {
+                font-size: larger;
+            }
+
+            dl.deflist { 
+                width: 100%;
+                display:inline-block;                                                                                                                                            
+            }
+            .deflist dt {
+                white-space: nowrap;
+                background-color: #ddd;
+                float: left;
+                width: 30%;
+                margin: 2px;
+                padding: 4px;
+                text-align: right;
+                box-sizing: border-box;
+                clear: left;
+            }
+            .deflist dd {
+            font-weight: bold;
+            float: left;
+            margin: 2px;
+            padding: 4px;
+            box-sizing: border-box;
+            clear: right;
+            }
+
+            /* remove to display raw json in debug textarea */
+            #xlsx_json {
+                display: none;
+            }
+            .errormsg {
+                color:red;
+            }
+
+        </style>
+
+        <script type="text/javascript">
+
+            // example URL: https://delivery.peterconnects.com/widgets/excel-widget/?matchwith=Queue%20number&match=+31850520330&src=QueueNumbers.xlsx
+
+            // parse query paramaters
+            var qd = {};
+            if (location.search) location.search.substr(1).split("&").forEach(function (item) { var s = item.split("="), k = s[0], v = s[1] && decodeURIComponent(s[1]); (qd[k] = qd[k] || []).push(v) })
+            if (location.hash) {
+                qd['#'] = location.hash.substr(1);
+            }
+
+            function displayStatus(statusText) {
+                $('#status').html(statusText);
+            }
+            function displayError(statusText) {
+                displayStatus('<span class="errormsg">'+statusText+'</span>');
+            }
+
+            // display data record
+            function displayItem(obj) {
+                let elm= $("#keyvaluelist");
+                for (name in obj) {
+                        elm.append("<dt>"+name+"</dt><dd>"+obj[name]+"</dd>");
+                    }
+            }
+
+            // find matching record
+            function matchRecord(jsonObject, match, matchWith) {
+
+                // any records loaded?
+                if (!jsonObject.length) return displayError("No data record found");
+
+                // set match column
+                if (!matchWith) {
+                    matchWith= Object.keys(jsonObject[0])[0];
+                    console.log('Using column "'+ matchWith + '" for comparison');
+                }
+
+                // does matchWite data column exist?
+                if (!jsonObject[0].hasOwnProperty(matchWith)) return displayError('Data column "'+matchWith+ '" not found, are you using the correct casing?');
+
+                // find the row
+                let matchItem= jsonObject.find( (item) => item[matchWith]==match);
+                if (matchItem) {
+                    displayItem(matchItem);
+                    displayStatus("Match found for record "+match+ " (column "+matchWith+")");
+                }
+                else {
+                    displayError("No match found for "+match+ " (column "+matchWith+")");
+                }
+            }
+
+            function loadExcel(src, match, matchWith) {
+
+                // read the Excel document
+                $.ajax({
+                    url: src,
+                    method: 'GET',
+                    xhr: function() {
+                        var xhrOverride = new XMLHttpRequest();
+                        xhrOverride.responseType = 'arraybuffer';
+                        return xhrOverride;
+                    }
+                }).done(function (responseData) {
+    
+                    var workbook = XLSX.read(responseData, { type: "array"} );
+
+                    var first_sheet_name = workbook.SheetNames[0];
+
+                    // get worksheet
+                    var worksheet = workbook.Sheets[first_sheet_name];
+                    var json_object= XLSX.utils.sheet_to_json(worksheet, {
+                        raw: true
+                    });
+
+                    // set debug output (if visible)
+                    $( '#xlsx_json:visible').val( JSON.stringify(json_object) );
+
+                    // find the row
+                    matchRecord(json_object, match, matchWith);
+
+                }) .fail(function(jqXHDR, textStatus) {
+                    displayError("Read Excel failed ("+ textStatus +")"); 
+                });
+
+            }
+
+            $(document).ready(function () {
+
+                if (!qd["src"] || !qd["match"]) return  displayError("One or more required parameters are missing ?src=&lt;Excel URL&gt;&match=&lt;match value&gt;&matchwith=[column to find match value, default is first column]"); 
+
+                loadExcel(qd["src"], qd["match"], qd["matchwith"]);
+            });
+
+
+        </script>
+    </head>
+
+    <body>
+        <h1>Context from Excel demo widget</h1>
+
+        <div id="status"></div>
+        <dl id="keyvaluelist" class="deflist"></dl>
+    
+        <textarea rows=35 cols=120 id="xlsx_json"></textarea>
+
+    </body>
+    </html>
