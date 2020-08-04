@@ -1,42 +1,123 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title>Webpage demo widget</title>
+        <title>PeterConnects List parameters demo widget</title>
+        <script src="helpers.js"></script>
 
         <style>
+            h1 {font-size: larger; }
+            h2 {font-size: medium; }
             body { font-family: Roboto,sans-serif; padding: 0; margin: 0; color: #1b274a; }
-			body { background-color: rgb (31,86,124) }
+			body { background-color: rgb (31,86,124); }
+            #parms { margin-top: 1em; width:100%;}
             #parms th {text-align: left;}
+            #parms td:nth-child(1) {  width: 6em; }
+            #parms td:nth-child(2) {  max-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: bold; font-family: 'Courier New', Courier, monospace;}
+            #context-json-tree {font-size: smaller;}
+            #context-json-tree ol { list-style-type: disc; }
+            #context-json-tree li.empty-node { color: silver; }
         </style>
 
-        <script type="text/javascript">
+        <script>
 
             // parse query parameters
             var qd = {};
             if (location.search) location.search.substr(1).split("&").forEach(function(item) {var s = item.split("="), k = s[0], v = s[1] && decodeURIComponent(s[1]); (qd[k] = qd[k] || []).push(v)})
             if (location.hash) qd['#']= location.hash.substr(1);
 
+
+            const iterateObject = (obj) => {
+                var ol = document.createElement("OL");
+                
+                Object.keys(obj).forEach(key => {
+
+                    var li = document.createElement("LI");
+                    ol.appendChild(li);
+
+                    if (obj[key]===null) {
+                        li.innerHTML = key+" : null";
+                        li.className="empty-node"; 
+                    }
+                    else if (typeof obj[key] === 'object') {
+                        li.innerHTML = key+" : ";
+                        li.appendChild(iterateObject(obj[key]));
+                        
+                    }
+                    else {
+                        li.innerHTML = key+" : "+obj[key];
+                        if (!obj[key]) li.className="empty-node"; 
+                    }
+                })
+                return ol;
+            }
+
+            function parseNodes(obj) { // takes a nodes array and turns it into a <ol>
+                var ol = document.createElement("OL");
+                for(var prop in obj) {
+                    ol.appendChild(parseNode(nodes[prop]));
+                }
+                return ol;
+            }
+
+            function parseNode(node) { // takes a node object and turns it into a <li>
+                var li = document.createElement("LI");
+                li.innerHTML = node.title;
+                li.className = node.class;
+                if(node.nodes) li.appendChild(parseNodes(node.nodes));
+                return li;
+            }
+
             function init() {
+                document.getElementById("timestamp").innerHTML= new Date().toISOString();
+
                 var tbl= document.getElementById("parms");
                 if (tbl) {
                     // enumerate parameters
                     for( var prop in qd) {
-                        console.log(prop+": "+qd[prop]);
                         var row= tbl.insertRow(-1);
                         row.insertCell(-1).innerHTML= prop;
                         row.insertCell(-1).innerHTML= qd[prop];
                     }
                 }
+
+                if (qd["context"]) {
+                    var jsonContext= Base64.decode(qd["context"]);
+
+                    if (jsonContext.charAt(0)!='{') {
+                        jsonContext= "Not a valid json";
+                    }
+                    else {
+
+                        var jsonObject= JSON.parse(jsonContext);
+                        
+                        document.getElementById("context-json-tree").appendChild(iterateObject(jsonObject));
+                    }
+                    document.getElementById("context-json").innerHTML= jsonContext;
+
+
+
+                }
+
+
+
             }
 
         </script>
     </head>
-    <body onload="init()">
+    <body>
 
-        <h1>Web page demo widget</1h>
+        <h1>Widget parameters</h1>
+
+        <div>Timestamp:&nbsp;<span id="timestamp"></span></div>
+
         <table id="parms">
             <tr><th>Name</th><th>Value</th></tr>
         </table>
     
+        <h2>Context json</h2>
+        <div id="context-json-tree"></div>
+        <textarea rows=35 cols=80 id="context-json"></textarea>
+
+        <script>init()</script>
     </body>
 </html>
