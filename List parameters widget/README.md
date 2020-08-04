@@ -1,4 +1,4 @@
-"# PeterConnects-List-Parameters-Widget" 
+# PeterConnects-List-Parameters-Widget
 
 Simple widgets that lists the input parameters passed to the widget.
 Useful for testing and also to get started with PeterConnects widgets.
