@@ -10,8 +10,8 @@
         </style>
 
         <script type="text/javascript">
-            // example URL: https://delivery.peterconnects.com/widgets/webpage-demo-widget.html?cli=[CLI]&email=[EMAIL]&lang=[LANG]&theme=[THEME]#hash
 
+            // parse query parameters
             var qd = {};
             if (location.search) location.search.substr(1).split("&").forEach(function(item) {var s = item.split("="), k = s[0], v = s[1] && decodeURIComponent(s[1]); (qd[k] = qd[k] || []).push(v)})
             if (location.hash) qd['#']= location.hash.substr(1);
@@ -19,7 +19,7 @@
             function init() {
                 var tbl= document.getElementById("parms");
                 if (tbl) {
-
+                    // enumerate parameters
                     for( var prop in qd) {
                         console.log(prop+": "+qd[prop]);
                         var row= tbl.insertRow(-1);
