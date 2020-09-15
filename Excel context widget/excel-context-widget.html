@@ -48,9 +48,7 @@
         </style>
 
         <script type="text/javascript">
-
-            // example URL: https://delivery.peterconnects.com/widgets/excel-widget/?matchwith=Queue%20number&match=+31850520330&src=QueueNumbers.xlsx
-
+        
             // parse query paramaters
             var qd = {};
             if (location.search) location.search.substr(1).split("&").forEach(function (item) { var s = item.split("="), k = s[0], v = s[1] && decodeURIComponent(s[1]); (qd[k] = qd[k] || []).push(v) })
