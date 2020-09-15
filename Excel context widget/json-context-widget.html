@@ -1,9 +1,8 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title>Excel demo widget</title>
+        <title>Json demo widget</title>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-        <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>        
 
         <style>
             body { font-family: Roboto,sans-serif; padding: 0; margin: 0; color: #1b274a; }
@@ -48,9 +47,7 @@
         </style>
 
         <script type="text/javascript">
-
-            // example URL: https://delivery.peterconnects.com/widgets/excel-widget/?matchwith=Queue%20number&match=+31850520330&src=QueueNumbers.xlsx
-
+        
             // parse query paramaters
             var qd = {};
             if (location.search) location.search.substr(1).split("&").forEach(function (item) { var s = item.split("="), k = s[0], v = s[1] && decodeURIComponent(s[1]); (qd[k] = qd[k] || []).push(v) })
@@ -99,57 +96,37 @@
                 }
             }
 
-            function loadExcel(src, match, matchWith) {
+            function loadJson(src, match, matchWith) {
 
-                // read the Excel document
+                // read the json document
                 var t0= performance.now();
-                $.ajax({
-                    url: src,
-                    method: 'GET',
-                    xhr: function() {
-                        var xhrOverride = new XMLHttpRequest();
-                        xhrOverride.responseType = 'arraybuffer';
-                        return xhrOverride;
-                    }
-                }).done(function (responseData) {
-    
+
+                $.getJSON( src 
+                ).done(function (json_object) {
+
                     var t1= performance.now();
-
-                    var workbook = XLSX.read(responseData, { type: "array"} );
-
-                    var t2= performance.now();
-
-                    var first_sheet_name = workbook.SheetNames[0];
-
-                    // get worksheet
-                    var worksheet = workbook.Sheets[first_sheet_name];
-                    var json_object= XLSX.utils.sheet_to_json(worksheet, {
-                        raw: true
-                    });
-
-                    var t3= performance.now();
 
                     // find the row
                     matchRecord(json_object, match, matchWith);
 
-                    var t4= performance.now();
+                    var t2= performance.now();
 
-                    console.log(`Excel get ${t1-t0}ms, read ${t2-t1}ms, convert ${t3-t2}ms, find ${t4-t3}ms`);
+                    console.log(`json get ${t1-t0}ms, find ${t2-t1}ms`);
 
                     // set debug output (if visible)
                     $( '#xlsx_json:visible').val( JSON.stringify(json_object) );
 
                 }) .fail(function(jqXHDR, textStatus) {
-                    displayError("Read Excel failed ("+ textStatus +")"); 
+                    displayError("Read json failed ("+ textStatus +")"); 
                 });
 
             }
 
             $(document).ready(function () {
 
-                if (!qd["src"] || !qd["match"]) return  displayError("One or more required parameters are missing ?src=&lt;Excel URL&gt;&match=&lt;match value&gt;&matchwith=[column to find match value, default is first column]"); 
+                if (!qd["src"] || !qd["match"]) return  displayError("One or more required parameters are missing ?src=&lt;Json URL&gt;&match=&lt;match value&gt;&matchwith=[column to find match value, default is first column]"); 
 
-                loadExcel(qd["src"], qd["match"], qd["matchwith"]);
+                loadJson(qd["src"], qd["match"], qd["matchwith"]);
             });
 
 
@@ -157,7 +134,7 @@
     </head>
 
     <body>
-        <h1>Context from Excel demo widget</h1>
+        <h1>Context from Json demo widget</h1>
 
         <div id="status"></div>
         <dl id="keyvaluelist" class="deflist"></dl>
