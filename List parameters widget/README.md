@@ -1,6 +1,6 @@
 # PeterConnects-List-Parameters-Widget
 
-Simple widget that lists the input parameters passed to the widget.\
+Simple widget that lists the input parameters passed to the Web Page Widget.\
 Useful for testing and also to get started with PeterConnects widgets.
 
 For a live example, use this URL:\
